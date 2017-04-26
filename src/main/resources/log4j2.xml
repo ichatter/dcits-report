@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+	<Properties>
+		<Property name="LOG_HOME">../log</Property>
+		<Property name="log_pattern">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</Property>
+		<Property name="rolling_file_name">-%d{yyyy-MM-dd}.%i.log.gz</Property>
+	</Properties>
+	<Appenders>
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout pattern="${log_pattern}" />
+		</Console>
+		<!-- info -->
+		<RollingRandomAccessFile name="infoFile"
+		   fileName="${LOG_HOME}/info.log"
+		   filePattern="${LOG_HOME}/info${rolling_file_name}"
+		   immediateFlush="true" append="true">
+		   <Filters>
+		   	  <!-- info文件只输出level及以上级别的信息(onMatch),其他的直接拒绝(onMismatch) -->
+		      <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY" />
+		   </Filters>
+		   <PatternLayout>
+		      <Pattern>${log_pattern}</Pattern>
+		      <Charset>UTF-8</Charset>
+		   </PatternLayout>
+		   <Policies>
+		      <SizeBasedTriggeringPolicy size="1M" /><!-- 每个文件大小 -->
+		      <!-- interval基于日志文件名的时间精度 -->
+		      <!-- <TimeBasedTriggeringPolicy interval="1" modulate="true" /> -->
+		   </Policies>
+		   <DefaultRolloverStrategy max="10" /><!-- 压缩文件个数 -->
+		</RollingRandomAccessFile>
+		<!-- error -->
+		<RollingRandomAccessFile name="errorFile"
+		   fileName="${LOG_HOME}/error.log"
+		   filePattern="${LOG_HOME}/error${rolling_file_name}"
+		   immediateFlush="true" append="true">
+		   <Filters>
+		   	  <!-- error文件只输出level及以上级别的信息(onMatch),其他的直接拒绝(onMismatch) -->
+		      <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY" />
+		   </Filters>
+		   <PatternLayout>
+		      <Pattern>${log_pattern}</Pattern>
+		      <Charset>UTF-8</Charset>
+		   </PatternLayout>
+		   <Policies>
+		      <SizeBasedTriggeringPolicy size="1M" /><!-- 每个文件大小 -->
+		      <!-- interval基于日志文件名的时间精度 -->
+		      <!-- <TimeBasedTriggeringPolicy interval="1" modulate="true" /> -->
+		   </Policies>
+		   <DefaultRolloverStrategy max="10" /><!-- 压缩文件个数 -->
+		</RollingRandomAccessFile>
+	</Appenders>
+	<Loggers>
+		<Root level="trace">
+			<AppenderRef ref="Console" />
+		</Root>
+		<Logger name="com.dc" level="debug">
+			<AppenderRef ref="infoFile" />
+			<AppenderRef ref="errorFile" />
+		</Logger>
+	</Loggers>
+</Configuration>
