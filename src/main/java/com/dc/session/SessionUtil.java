@@ -1,7 +1,5 @@
 package com.dc.session;
 
-import org.apache.http.Header;
-
 public class SessionUtil {
 	private static Session session = new Session();
 
@@ -9,16 +7,17 @@ public class SessionUtil {
 		return session;
 	}
 
-	public static void setCookie(Header cookie) {
-		session.setCookie(cookie);
-	}
-
-	public static Header getCookie() {
-		return session.getCookie();
-	}
-
 	public static void setUsernamePassword(String username, String password) {
 		session.setUsername(username);
 		session.setPassword(password);
 	}
+
+	public static String getUsername() {
+		return session.getUsername();
+	}
+
+	public static String getPassword() {
+		return session.getPassword();
+	}
+
 }

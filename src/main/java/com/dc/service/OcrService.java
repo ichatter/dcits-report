@@ -12,7 +12,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
@@ -25,14 +24,15 @@ import org.xml.sax.InputSource;
 import com.dc.common.Api;
 import com.dc.util.ConfigUtil;
 import com.dc.util.HttpHeaderUtil;
-import com.dc.util.OcrUtil;
+import com.dc.util.OcrKingUtil;
+import com.dc.util.Tess4jUtil;
 
 public class OcrService {
 	private static final Logger logger = LogManager.getLogger(OcrService.class);
 
 	private HttpClient client;
 	private InputStream ocrStream;
-	private String orcCode;
+	private String ocrCode;
 
 	public OcrService(HttpClient client) {
 		this.client = client;
@@ -61,6 +61,16 @@ public class OcrService {
 	 * @return
 	 */
 	public String recognizeCode() {
+		// return recognizeCodeByOcrKing();//备用识别方式
+		return recognizeCodeByTess4j();
+	}
+
+	/**
+	 * 通过OcrKing提供的远程api接口进行验证码识别
+	 * 
+	 * @return
+	 */
+	private String recognizeCodeByOcrKing() {
 		Map<String, String> dataMap = new HashMap<String, String>();
 		dataMap.put("service", "OcrKingForCaptcha");
 		dataMap.put("language", "eng");
@@ -68,9 +78,10 @@ public class OcrService {
 		dataMap.put("type", "https://c.dcits.com/dcAuthCode/Image3Servlet?t=" + System.currentTimeMillis());
 		dataMap.put("apiKey", ConfigUtil.getProp("ocrApiKey"));
 
-		// String ret = OcrUtil.postMultipart(ConfigUtil.getProp("ocrApiUrl"),
+		// String ret =
+		// OcrKingUtil.postMultipart(ConfigUtil.getProp("ocrApiUrl"),
 		// dataMap, fileMap);
-		String ret = OcrUtil.postMultipart2(ConfigUtil.getProp("ocrApiUrl"), dataMap, ocrStream);
+		String ret = OcrKingUtil.postMultipart2(ConfigUtil.getProp("ocrApiUrl"), dataMap, ocrStream);
 		// logger.info("验证码识别响应XML:\n" + ret);
 
 		Node node = null;
@@ -84,8 +95,18 @@ public class OcrService {
 			return "";
 		}
 
-		orcCode = node.getTextContent();
-		return orcCode;
+		ocrCode = node.getTextContent();
+		return ocrCode;
+	}
+
+	/**
+	 * 通过本地Tess4j接口进行识别，不存在网络通讯异常的问题，优选识别方式
+	 * 
+	 * @return
+	 */
+	private String recognizeCodeByTess4j() {
+		ocrCode = Tess4jUtil.recognize(ocrStream);// 使用本地tess4j API进行验证码识别
+		return ocrCode;
 	}
 
 	/**
@@ -94,8 +115,9 @@ public class OcrService {
 	 * @param valcode
 	 */
 	public boolean verifyingCode() {
-		HttpGet get = new HttpGet(Api.verifyUrl + "&checkcode=" + orcCode);
+		HttpGet get = null;
 		try {
+			get = new HttpGet(Api.verifyUrl + "&checkcode=" + ocrCode);
 			HttpResponse resp = client.execute(get);
 			String result = EntityUtils.toString(resp.getEntity());
 			boolean b = Pattern.matches(".*\\{\"ifauth\":\"true\"\\}.*", result);

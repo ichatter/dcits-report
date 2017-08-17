@@ -10,10 +10,10 @@ public class Api {
 	public static final String loginUrl = "https://c.dcits.com/dcAuthCode/AuthCodeUser";
 	// 免验证码登陆接口 (暂未研究)
 	public static final String loginUrl2 = "https://c.dcits.com/bg/bg/main/index.jsp";
-	// 登陆之后必须调一下这个接口，以获取JSESSIONID
-	public static final String jsessionidUrl = "https://c.dcits.com/bg/bg/main/sso_bg.jsp";
+	// 重定向url,登陆之后必须调一下这个接口，以获取JSESSIONID
+	public static final String jsessionidUrl="https://c.dcits.com/itswk/";
 	// 查询每周报工列表
-	public static final String reportListUrl = "https://c.dcits.com/bg/bg/baog/weekrep-paper.jsp";
+	public static final String reportListUrl = "https://c.dcits.com/itswk/forward/L215d29yay90aW1lU2hlZXQvdGltZXNoZWV0aW5kZXg=";
 	// 提交报工数据
-	public static final String reportUrl = "https://c.dcits.com/bg/bg/baog/weekrep-paperdo.jsp";
+	public static final String reportUrl = "https://c.dcits.com/itswk/mywork/timeSheet/savetimesheet";
 }

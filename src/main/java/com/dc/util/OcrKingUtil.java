@@ -32,9 +32,9 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public final class OcrUtil {
+public final class OcrKingUtil {
 	
-	private static final Logger logger = LogManager.getLogger(OcrUtil.class);
+	private static final Logger logger = LogManager.getLogger(OcrKingUtil.class);
 
 	/**
 	 * post data with file uploading
@@ -231,8 +231,8 @@ public final class OcrUtil {
 		dataMap.put("apiKey", ConfigUtil.getProp("ocrApiKey"));
 		
 		Map<String,String> f=new HashMap<String,String>();
-		f.put("name", "C:/Users/yzy/Desktop/11.png");
-		String ret = OcrUtil.postMultipart(ConfigUtil.getProp("ocrApiUrl"), dataMap, f);
+		f.put("name", "C:/Users/yzy/Desktop/11.jpg");
+		String ret = OcrKingUtil.postMultipart(ConfigUtil.getProp("ocrApiUrl"), dataMap, f);
 		System.out.println(ret);
 	}
 
