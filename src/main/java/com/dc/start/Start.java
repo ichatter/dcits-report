@@ -1,5 +1,8 @@
 package com.dc.start;
 
+import static com.dc.session.Session.MAX_TRY_TIMES;
+import static com.dc.session.Session.curr_try_times;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Timer;
@@ -9,15 +12,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.dc.service.OcrService;
 import com.dc.service.UserService;
-import static com.dc.session.Session.*;
 import com.dc.session.SessionUtil;
-import com.dc.util.HttpHeaderUtil;
 
 public class Start {
 	private static final Logger logger = LogManager.getLogger(Start.class);
@@ -26,7 +26,7 @@ public class Start {
 	private static boolean isFailed = true;
 
 	public static void main(String[] args) {
-		//获取start.sh存入系统环境变量的账户信息
+		// 获取start.sh存入系统环境变量的账户信息
 		SessionUtil.setUsernamePassword(System.getenv("username"), System.getenv("password"));
 
 		TimerTask task = new Start().new MyTimerTask();
@@ -66,10 +66,6 @@ public class Start {
 		HttpClientUtils.closeQuietly(client);
 		// Locale.setDefault(new Locale("zh","CN"));
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		BasicHttpClientConnectionManager connMan = new BasicHttpClientConnectionManager();
-		builder.setConnectionManager(connMan);
-		builder.setDefaultHeaders(HttpHeaderUtil.defaultHeaders());
-		// builder.setSSLHostnameVerifier(SSLConnectionSocketFactory.getDefaultHostnameVerifier());
 		client = builder.build();
 	}
 
@@ -78,12 +74,15 @@ public class Start {
 		OcrService ocrService = new OcrService(client);
 		while (true) {
 			logger.info("正在获取验证码图片...");
-			ocrService.getOcrInputStream();
+			if (ocrService.getOcrInputStream() == null) {
+				logger.info("获取验证码失败，重新运行...");
+				return;
+			}
 
 			logger.info("正在识别验证码图片...");
 			if (StringUtils.isBlank(ocrService.recognizeCode())) {
 				logger.info("识别失败，重新运行...");
-				return;
+				continue;
 			}
 
 			logger.info("正在验证验证码...");

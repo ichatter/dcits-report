@@ -37,6 +37,9 @@ dependencies {
     compile 'org.apache.commons:commons-lang3:3.5'
     compile 'org.jsoup:jsoup:1.10.2'
     compile 'org.apache.logging.log4j:log4j-core:2.8.2'
+    compile 'net.sourceforge.tess4j:tess4j:3.4.0'
+    compile 'com.alibaba:fastjson:1.2.36'
+    
 }
 
 mainClassName = 'com.dc.start.Start'

@@ -1,5 +1,6 @@
 package com.dc.service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,10 +9,10 @@ import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
@@ -23,6 +24,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.nodes.FormElement;
 import org.jsoup.select.Elements;
 
+import com.alibaba.fastjson.JSONObject;
 import com.dc.common.Api;
 import com.dc.session.SessionUtil;
 import com.dc.util.ConfigUtil;
@@ -44,28 +46,18 @@ public class UserService {
 	public boolean login() {
 		HttpPost post = new HttpPost(Api.loginUrl);
 		List<NameValuePair> params = new ArrayList<NameValuePair>();
-		params.add(new BasicNameValuePair("username", SessionUtil.getSession().getUsername()));
-		params.add(new BasicNameValuePair("password", SessionUtil.getSession().getPassword()));
+		params.add(new BasicNameValuePair("username", SessionUtil.getUsername()));
+		params.add(new BasicNameValuePair("password", SessionUtil.getPassword()));
 		try {
 			post.setEntity(new UrlEncodedFormEntity(params, Consts.UTF_8));
 			HttpResponse resp = client.execute(post);// 登陆
 			String charset = HttpHeaderUtil.getResponseCharset(resp);
 			String respHtml = StringUtil.removeEmptyLine(resp.getEntity().getContent(), charset == null ? "utf-8" : charset);
 
-			// logger.info(respHtml);
 			Document doc = Jsoup.parse(respHtml);
 			Elements titles = doc.getElementsByTag("TITLE");
 			for (Element title : titles) {
 				if (title.hasText() && title.text().contains("Success")) {
-					HttpGet get = new HttpGet(Api.jsessionidUrl);
-					resp = client.execute(get);// 获取JSESSIONID
-					StringBuffer sb = new StringBuffer();
-					for (Header h : resp.getHeaders("Set-Cookie")) {
-						// logger.info(h.getName() + ":" + h.getValue());
-						sb.append(h.getValue() + ";");
-					}
-					SessionUtil.setCookie(new BasicHeader("Cookie", sb.toString()));
-					EntityUtils.consume(resp.getEntity());// 释放资源
 					return true;// 登陆成功
 				}
 			}
@@ -76,32 +68,60 @@ public class UserService {
 	}
 
 	/**
+	 * 需要调用一次这个接口，使该httpClient对象获得响应头Set-Cookie:JSESSIONID=.......
+	 */
+	private void getJsessionid() {
+		HttpGet get = new HttpGet(Api.jsessionidUrl);
+		get.setConfig(RequestConfig.custom().setCircularRedirectsAllowed(true).build());
+		HttpResponse resp;
+		try {
+			resp = client.execute(get);
+			EntityUtils.consume(resp.getEntity());
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
 	 * 查询报工表单，并填充报工数据
 	 * 
 	 * @return
 	 */
 	public List<NameValuePair> getReportData() {
+		getJsessionid();
 		HttpGet get = new HttpGet(Api.reportListUrl);
-		get.setHeader(SessionUtil.getCookie());
+		get.setConfig(RequestConfig.custom().setCircularRedirectsAllowed(true).build());
 		try {
 			HttpResponse resp = client.execute(get);
 			Document doc = Jsoup.parse(EntityUtils.toString(resp.getEntity()));
-			Elements es = doc.select("form[name=formnew] table.tab");
+			Elements es = doc.select("form#form1 tbody");
 			Elements all = es.select("tr");
+
 			String isBizTrip = ConfigUtil.getProp("isBizTrip").toLowerCase();
-			for (int i = 1; i < all.size() - 1; i++) {// 去掉第一行和最末一行
+			String reportType = ConfigUtil.getProp("reportType");
+			for (int i = 0; i < all.size() - 1; i++) {// 去掉最末一行
 				Element theDay = all.get(i);
-				if (isBizTrip.equals("true") || isBizTrip.equals("1")) {
-					theDay.select("input[name^=WA_CATALOG_CODE]").get(0).val("1");// 出差
+				Elements reportTypes = theDay.select("select[name*=bgmold] > option");// 工作类型
+				reportTypes.removeAttr("selected");//先清空默认已经选择的值
+				for (Element e : reportTypes) {
+					if (e.val().equalsIgnoreCase(reportType)) {
+						e.attr("selected", true);
+						break;
+					}
 				}
-				Element e = theDay.select("input[type=checkbox]").get(0).parent().parent();
-				Element workHour = e.siblingElements().select("td input[name^=WRR_NMLTIME]").get(0);
+				if (isBizTrip.equals("true") || isBizTrip.equals("1")) {
+					theDay.select("input[name$=businesstrip]").get(0).attr("checked", true).val("1");// 出差
+				}
+				Element workHour = theDay.select("input[name$=workhours]").get(0);
 				if (!workHour.hasAttr("readonly")) {
 					workHour.val("8.0");// 非节假日就要报工
 				}
+				// 将每条记录中的vacationhours字段input属性中的disabled去掉，否则FormElement无法提取该字段值
+				theDay.select("input[name$=vacationhours]").get(0).removeAttr("disabled");
 			}
 
-			Element f = doc.select("form[name=formnew]").get(0);
+			Element f = doc.select("form#form1").get(0);
 			if (f instanceof FormElement) {
 				FormElement form = (FormElement) f;
 				List<KeyVal> list = form.formData();
@@ -123,14 +143,12 @@ public class UserService {
 	 */
 	public boolean report() {
 		HttpPost post = new HttpPost(Api.reportUrl);
-		post.setHeader(SessionUtil.getCookie());
-		post.setHeader("Referer", "https://c.dcits.com/bg/bg/baog/weekrep-paper.jsp");
 		try {
 			post.setEntity(new UrlEncodedFormEntity(params, Consts.UTF_8));
 			HttpResponse resp = client.execute(post);
-			EntityUtils.consume(resp.getEntity());// 释放资源
-			// 报工成功，响应头中会有重定向的location属性
-			return resp.getFirstHeader("location").getValue().equals("https://c.dcits.com/bg/bg/baog/weekrep-view.jsp");
+			JSONObject jo = JSONObject.parseObject(EntityUtils.toString(resp.getEntity()));
+			// 报工成功，返回json结构的报文{"data" : [ {},{}...],"success" : true}
+			return jo.getBooleanValue("success");
 		} catch (Exception e) {
 			logger.error("报工异常:", e);
 		}

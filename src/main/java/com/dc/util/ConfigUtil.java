@@ -14,11 +14,11 @@ import org.apache.logging.log4j.Logger;
  * 
  */
 public class ConfigUtil {
-	private static final Logger logger = LogManager.getLogger(OcrUtil.class);
+	private static final Logger logger = LogManager.getLogger(OcrKingUtil.class);
 
 	private static Properties props = new Properties();
 
-	static {
+	private static void loadConfig() {
 		InputStream is = ConfigUtil.class.getResourceAsStream("/config.properties");
 		try {
 			props.load(is);
@@ -35,12 +35,22 @@ public class ConfigUtil {
 		}
 	}
 
+	/**
+	 * 每次获取属性时，都重新从config.properties中读取最新数据，而不在内存中缓存
+	 * 
+	 * @param key
+	 * @return
+	 */
 	public static String getProp(String key) {
+		loadConfig();
 		return props.getProperty(key);
 	}
 
-	public static void main(String[] args) {
-		String p = ConfigUtil.getProp("isBizTrip");
-		System.out.println(p);
+	public static void main(String[] args) throws InterruptedException {
+		while (true) {
+			String p = ConfigUtil.getProp("isBizTrip");
+			System.out.println(p);
+			Thread.sleep(3000);
+		}
 	}
 }
