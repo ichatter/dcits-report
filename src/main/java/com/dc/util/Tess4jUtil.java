@@ -46,12 +46,12 @@ public class Tess4jUtil {
 			File tmpFile = new File(filePath);
 			FileUtils.copyInputStreamToFile(is, tmpFile);
 
-			// 识别验证码图片
-			String ocrCode = instance.doOCR(tmpFile).replaceAll("\n", "");// 返回结果有换行符
+			// 识别验证码图片(去掉返回结果的换行符和空格)
+			String ocrCode = instance.doOCR(tmpFile).replaceAll("\n", "").replaceAll(" ", "");
 			logger.info("验证码图片识别结果：" + ocrCode);
 			return ocrCode;
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("验证码图片识别异常：", e);
 		}
 		return "";
 	}
@@ -70,7 +70,7 @@ public class Tess4jUtil {
 			String ocrCode = instance.doOCR(tmpFile);// 返回结果有换行符
 			logger.info("验证码图片识别结果：" + ocrCode);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("验证码图片识别异常：", e);
 		}
 	}
 

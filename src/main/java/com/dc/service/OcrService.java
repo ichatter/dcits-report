@@ -23,7 +23,6 @@ import org.xml.sax.InputSource;
 
 import com.dc.common.Api;
 import com.dc.util.ConfigUtil;
-import com.dc.util.HttpHeaderUtil;
 import com.dc.util.OcrKingUtil;
 import com.dc.util.Tess4jUtil;
 
@@ -44,6 +43,7 @@ public class OcrService {
 	public InputStream getOcrInputStream() {
 		HttpGet get = new HttpGet(Api.verifyCodeUrl + System.currentTimeMillis());
 		get.setHeader(new BasicHeader("Referer", "https://c.dcits.com/mydcitslogin.html"));// 这个头必需
+
 		try {
 			HttpResponse resp = client.execute(get);
 			ocrStream = resp.getEntity().getContent();
@@ -138,7 +138,7 @@ public class OcrService {
 		boolean b = Pattern.matches(".*\\{\"ifauth\":\"true\"\\}.*", s);
 		System.out.println(b);
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		builder.setDefaultHeaders(HttpHeaderUtil.defaultHeaders());
+		// builder.setDefaultHeaders(HttpHeaderUtil.defaultHeaders());
 		new OcrService(builder.build()).recognizeCode();
 	}
 }
