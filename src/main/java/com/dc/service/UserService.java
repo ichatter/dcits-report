@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.Consts;
-import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -103,7 +102,7 @@ public class UserService {
 			for (int i = 0; i < all.size() - 1; i++) {// 去掉最末一行
 				Element theDay = all.get(i);
 				Elements reportTypes = theDay.select("select[name*=bgmold] > option");// 工作类型
-				reportTypes.removeAttr("selected");//先清空默认已经选择的值
+				reportTypes.removeAttr("selected");// 先清空默认已经选择的值
 				for (Element e : reportTypes) {
 					if (e.val().equalsIgnoreCase(reportType)) {
 						e.attr("selected", true);
@@ -148,7 +147,10 @@ public class UserService {
 			HttpResponse resp = client.execute(post);
 			JSONObject jo = JSONObject.parseObject(EntityUtils.toString(resp.getEntity()));
 			// 报工成功，返回json结构的报文{"data" : [ {},{}...],"success" : true}
-			return jo.getBooleanValue("success");
+			if (jo.getBooleanValue("success")) {
+				return true;
+			}
+			logger.warn(jo.getString("error"));
 		} catch (Exception e) {
 			logger.error("报工异常:", e);
 		}

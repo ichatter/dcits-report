@@ -16,6 +16,6 @@ b. 其次使用ocrking提供的识别接口，用户需自行前往[ocrking](htt
 
 * ubuntu安装方式：sudo apt-get install tesseract-ocr安装
 * centos安装方式（32位 i686为例）：
-	*  #安装epel源 yum installl epel-release.noarch
-	*  #查询tesseract yum search tesseract
-	*  #安装tesseract yum install tesseract.i686
+	*  安装epel源 yum installl epel-release.noarch
+	*  查询tesseract yum search tesseract
+	*  安装tesseract yum install tesseract.i686
