@@ -78,9 +78,9 @@ task copyClassesResources(type: Copy) {
 	into "${project.buildDir}/dcits/classes"
 }
 task copyStartScript(type: Copy) {
-	from "${project.projectDir}/start.sh"
+	from "${project.projectDir}"
 	into "${project.buildDir}/dcits"
-	//include 'start.sh'
+	include 'start.sh','stop.sh'
 }
 
 task buildDcits(dependsOn: ['clean','build','copyJars','copyClassesResources','copyStartScript']) {
