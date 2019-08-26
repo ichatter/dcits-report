@@ -1,19 +1,23 @@
 package com.dc.util;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Enumeration;
 
+import javax.imageio.ImageIO;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import net.sourceforge.tess4j.ITessAPI.TessPageSegMode;
 import net.sourceforge.tess4j.ITesseract;
 import net.sourceforge.tess4j.Tesseract;
+import net.sourceforge.tess4j.TesseractException;
 import net.sourceforge.tess4j.util.LoadLibs;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class Tess4jUtil {
 	private static final Logger logger = LogManager.getLogger(Tess4jUtil.class);
@@ -42,15 +46,18 @@ public class Tess4jUtil {
 
 	public static String recognize(InputStream is) {
 		try {
-			String filePath = FileUtils.getTempDirectoryPath() + File.separatorChar + "ocrtmp.jpg";
-			File tmpFile = new File(filePath);
-			FileUtils.copyInputStreamToFile(is, tmpFile);
+//			String filePath = FileUtils.getTempDirectoryPath() + File.separatorChar + "ocrtmp.jpg";
+//			File tmpFile = new File(filePath);
+//			FileUtils.copyInputStreamToFile(is, tmpFile);
+			BufferedImage image = ImageIO.read(is);
 
 			// 识别验证码图片(去掉返回结果的换行符和空格)
-			String ocrCode = instance.doOCR(tmpFile).replaceAll("\n", "").replaceAll(" ", "");
+			String ocrCode = instance.doOCR(image).trim();
 			logger.info("验证码图片识别结果：" + ocrCode);
 			return ocrCode;
-		} catch (Exception e) {
+		} catch (IOException e) {
+			logger.error("验证码图片流转换异常：", e);
+		} catch (TesseractException e) {
 			logger.error("验证码图片识别异常：", e);
 		}
 		return "";

@@ -7,7 +7,7 @@ public class Session {
 	private String password;
 	public static final int MAX_TRY_TIMES = 5;// 报工过程中遇到各种异常时，持续尝试报工的允许最大次数
 	/** 当前尝试报工次数，不能超过{@code Session.MAX_TRY_TIMES} */
-	public static int curr_try_times = 0;
+	public static int tried_times = 0;
 
 	public String getUsername() {
 		return username;
