@@ -1,3 +1,11 @@
+# Changelogs 20190826
+1. 解决服务端无响应时程序偶尔卡死问题
+2. 去除启动类Start.java中的Timer.java定时任务，改用ScheduledExecutorService.java
+3. 使用HttpUtil.java统一获取全局的RequestConfig，并默认设置了通讯连接建立超时时间connectTimeout和响应读取超时时间socketTimeout
+4. 优化ocr识别时的图片流读取方式，将输入流保存到系统临时目录图片文件的方式，简化为直接使用ImageIO.read(is)
+5. 其他优化
+
+
 # dcits-report使用说明
 1. 自动报工需要识别验证码图片，本程序提供<b>两种</b>验证码识别方式:</br>
 a. 默认使用google支持的tesseract-ocr(java 语言api为tess4j)进行识别，缺点是工程依赖较大，导致工程发布出来后会大很多；</br>

@@ -51,6 +51,8 @@ public class OcrService {
 			return ocrStream;
 		} catch (Exception e) {
 			logger.error("获取验证码图片异常：", e);
+		} finally {
+			get.abort();
 		}
 		return null;
 	}

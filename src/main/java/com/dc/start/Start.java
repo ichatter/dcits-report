@@ -1,23 +1,24 @@
 package com.dc.start;
 
 import static com.dc.session.Session.MAX_TRY_TIMES;
-import static com.dc.session.Session.curr_try_times;
+import static com.dc.session.Session.tried_times;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.utils.HttpClientUtils;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.dc.service.OcrService;
 import com.dc.service.UserService;
 import com.dc.session.SessionUtil;
+import com.dc.util.HttpUtil;
 
 public class Start {
 	private static final Logger logger = LogManager.getLogger(Start.class);
@@ -29,48 +30,37 @@ public class Start {
 		// 获取start.sh存入系统环境变量的账户信息
 		SessionUtil.setUsernamePassword(System.getenv("username"), System.getenv("password"));
 
-		TimerTask task = new Start().new MyTimerTask();
-		Timer timer = new Timer();
-		timer.schedule(task, 0, 1000 * 3600 * 24);// 每24小时报工一次
-	}
+		ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+		executor.scheduleAtFixedRate(new Runnable() {
+			@Override
+			public void run() {
+				String dateStr = new SimpleDateFormat("yyyy年MM月dd日").format(new Date());
+				logger.info("报工开始了，" + SessionUtil.getUsername() + "，今天是：" + dateStr);
+				isFailed = true;
+				while (isFailed) {
+					if (tried_times >= MAX_TRY_TIMES) {
+						try {
+							logger.info("连续尝试次数超过" + MAX_TRY_TIMES + "次，先休息1小时...");
+							Thread.sleep(1000 * 3600);
+							tried_times = 0;
+						} catch (InterruptedException e) {
+							logger.error("线程休息出错：", e);
+						}
+					}
 
-	private class MyTimerTask extends TimerTask {
-
-		@Override
-		public void run() {
-			String dateStr = new SimpleDateFormat("yyyy年MM月dd日").format(new Date());
-			logger.info("报工开始了，今天是：" + dateStr);
-			isFailed = true;
-			while (isFailed) {
-				if (curr_try_times >= MAX_TRY_TIMES) {
+					tried_times++;
 					try {
+						new Start().start();
+					} finally {
 						HttpClientUtils.closeQuietly(client);
-						logger.info("连续尝试次数超过" + MAX_TRY_TIMES + "次，先休息1小时...");
-						Thread.sleep(1000 * 3600);
-						curr_try_times = 0;
-					} catch (InterruptedException e) {
-						logger.error("线程休息出错：", e);
 					}
 				}
-
-				curr_try_times++;
-				start();
 			}
-		}
-	}
-
-	/**
-	 * 每次报工结束，关闭该client，下次报工启用新的client
-	 */
-	private static void getHttpClient() {
-		HttpClientUtils.closeQuietly(client);
-		// Locale.setDefault(new Locale("zh","CN"));
-		HttpClientBuilder builder = HttpClientBuilder.create();
-		client = builder.build();
+		}, 0, 1, TimeUnit.DAYS);// 每24小时报工一次
 	}
 
 	private void start() {
-		getHttpClient();
+		client = HttpUtil.getHttpClient();// 每次报工启用新的client
 		OcrService ocrService = new OcrService(client);
 		while (true) {
 			logger.info("正在获取验证码图片...");
@@ -111,13 +101,8 @@ public class Start {
 			logger.warn("-_-!报工失败！");
 		}
 
-		release();
-	}
-
-	private void release() {
 		isFailed = false;// 程序成功结束时，修改执行状态
-		curr_try_times = 0;// 重置为0
-		HttpClientUtils.closeQuietly(client);
+		tried_times = 0;// 重置为0
 	}
 
 }

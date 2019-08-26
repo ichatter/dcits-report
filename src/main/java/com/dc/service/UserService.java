@@ -8,7 +8,6 @@ import org.apache.http.Consts;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -27,7 +26,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.dc.common.Api;
 import com.dc.session.SessionUtil;
 import com.dc.util.ConfigUtil;
-import com.dc.util.HttpHeaderUtil;
+import com.dc.util.HttpUtil;
 import com.dc.util.StringUtil;
 
 public class UserService {
@@ -50,8 +49,9 @@ public class UserService {
 		try {
 			post.setEntity(new UrlEncodedFormEntity(params, Consts.UTF_8));
 			HttpResponse resp = client.execute(post);// 登陆
-			String charset = HttpHeaderUtil.getResponseCharset(resp);
-			String respHtml = StringUtil.removeEmptyLine(resp.getEntity().getContent(), charset == null ? "utf-8" : charset);
+			String charset = HttpUtil.getResponseCharset(resp);
+			String respHtml = StringUtil.removeEmptyLine(resp.getEntity().getContent(),
+					charset == null ? "utf-8" : charset);
 
 			Document doc = Jsoup.parse(respHtml);
 			Elements titles = doc.getElementsByTag("TITLE");
@@ -62,6 +62,8 @@ public class UserService {
 			}
 		} catch (Exception e) {
 			logger.error("登陆失败：", e);
+		} finally {
+			post.abort();
 		}
 		return false;
 	}
@@ -71,7 +73,7 @@ public class UserService {
 	 */
 	private void getJsessionid() {
 		HttpGet get = new HttpGet(Api.jsessionidUrl);
-		get.setConfig(RequestConfig.custom().setCircularRedirectsAllowed(true).build());
+		get.setConfig(HttpUtil.getCircularRedirectsConfig());
 		HttpResponse resp;
 		try {
 			resp = client.execute(get);
@@ -79,6 +81,8 @@ public class UserService {
 
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			get.abort();
 		}
 	}
 
@@ -90,7 +94,7 @@ public class UserService {
 	public List<NameValuePair> getReportData() {
 		getJsessionid();
 		HttpGet get = new HttpGet(Api.reportListUrl);
-		get.setConfig(RequestConfig.custom().setCircularRedirectsAllowed(true).build());
+		get.setConfig(HttpUtil.getCircularRedirectsConfig());
 		try {
 			HttpResponse resp = client.execute(get);
 			Document doc = Jsoup.parse(EntityUtils.toString(resp.getEntity()));
@@ -132,6 +136,8 @@ public class UserService {
 			}
 		} catch (Exception e) {
 			logger.error("查询报工数据异常：", e);
+		} finally {
+			get.abort();
 		}
 		return new ArrayList<NameValuePair>();
 	}
@@ -153,6 +159,8 @@ public class UserService {
 			logger.warn(jo.getString("error"));
 		} catch (Exception e) {
 			logger.error("报工异常:", e);
+		} finally {
+			post.abort();
 		}
 		return false;
 	}
