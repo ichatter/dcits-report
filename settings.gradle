@@ -15,4 +15,4 @@ include 'api'
 include 'services:webservice'
 */
 
-rootProject.name = 'dcits'
+rootProject.name = 'dcits-report'

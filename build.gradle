@@ -80,21 +80,21 @@ println sourceSets.main.java.srcDirs
 
 task copyJars(type: Copy) {
 	from configurations.runtime
-	into "${project.buildDir}/dcits/lib"
+	into "${project.buildDir}/${project.name}/lib"
 }
 
 task copyClassesResources(type: Copy) {
 	from "${project.buildDir}/classes/main","${project.buildDir}/resources"
-	into "${project.buildDir}/dcits/classes"
+	into "${project.buildDir}/${project.name}/classes"
 }
 task copyScript(type: Copy) {
 	from "${project.projectDir}"
-	into "${project.buildDir}/dcits"
+	into "${project.buildDir}/${project.name}"
 	include 'start.sh','stop.sh'
 }
 
 task buildDcits(dependsOn: ['clean','build','copyJars','copyClassesResources','copyScript']) {
-	group 'dcits'
-	description 'Build a deployable project dcits'
+	group '${project.name}'
+	description 'Build a deployable project ${project.name}'
 }
 build.mustRunAfter clean
