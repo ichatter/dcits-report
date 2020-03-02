@@ -2,7 +2,7 @@
 
 export LANG=zh_CN.utf8
 
-if [ -z $JAVA_HOME]
+if [ -z $JAVA_HOME ]
 then
 	JAVA_HOME="/usr/java/jdk1.8.0_65"
 fi

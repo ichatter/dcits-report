@@ -20,10 +20,10 @@ b. 其次使用ocrking提供的识别接口，用户需自行前往[ocrking](htt
 
 1. ocrking通过远程http接口调用，实现简单，无依赖，但该识别接口易受网络通讯影响，如果使用该方式，应该注释掉build.gradle文件中多余依赖：
 //compile 'net.sourceforge.tess4j:tess4j:3.4.0'
-2. tess4j采用本地识别方式，无需网络，只需几行代码即可实现验证码的识别，但依赖库较大（体积增加40M+），另外在linux环境下，tesseract工具需另行安装。
+2. tess4j采用本地识别方式，无需网络，只需几行代码即可实现验证码的识别，但依赖库较大（size增加40M+），另外在linux环境下，tesseract工具需另行安装。
 
 * ubuntu安装方式：sudo apt-get install tesseract-ocr安装
 * centos安装方式（32位 i686为例）：
-	*  安装epel源 yum installl epel-release.noarch
+	*  安装epel源 yum install epel-release.noarch
 	*  查询tesseract yum search tesseract
 	*  安装tesseract yum install tesseract.i686
