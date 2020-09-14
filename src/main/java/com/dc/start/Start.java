@@ -97,12 +97,11 @@ public class Start {
 		boolean isSuccess = userService.report();
 		if (isSuccess) {
 			logger.info("恭喜，报工成功！");
+			isFailed = false;// 程序成功结束时，修改执行状态
+			tried_times = 0;// 重置为0
 		} else {
 			logger.warn("-_-!报工失败！");
 		}
-
-		isFailed = false;// 程序成功结束时，修改执行状态
-		tried_times = 0;// 重置为0
 	}
 
 }
